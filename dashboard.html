@@ -1,0 +1,115 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block content %}
+{% block title %}Dashboard{% endblock title %}
+
+<div class="container emp-profile">
+
+    <div class="row">
+        <div class="col-md-2">
+            <img src="{% static 'img/clg_logo.png'%}" alt="" width="50%">
+        </div>
+
+        <div class="col-md-4">
+            <div class="profile-head" style="color: white;">
+                <h6 class="text-muted p-1"> Hello, </h6>
+                <h3 class="text-muted p-1"> {{fname}} {{lname}}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <a class="scan" href="dashboard"><input type="submit" class="profile-edit-btn m-2"
+                     name="btnAddMore" value="Start Camera" /></a>
+            <a   href="profiles"><input type="submit" class="profile-edit-btn m-2 "
+                        name="btnAddMore" value="Student Profiles" /></a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'log_out' %}"><input type="submit" class="profile-edit-btn m-2 " name="btnAddMore"
+                value="Logout" /></a>
+        </div>
+    </div>
+    <hr>
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="present-tab" data-toggle="tab" href="#present" role="tab"
+                aria-controls="home" aria-selected="true">Detected Students Details</a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="myTabContent">
+        <br>
+        <div class="tab-pane fade show active" id="present" role="tabpanel" aria-labelledby="home-tab" >
+
+            <table class="table table-striped " style="height:200px; overflow: auto; color: white;">
+                <thead>
+                    <tr>
+                        <th scope="col">PRN No</th>
+                        <th scope="col">Student Name</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Year of Study</th>
+                        <th scope="col">Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in detect %}
+                    <tr>
+                        <th scope="row">{{profile.prn_no}}</th>
+                        <td>{{profile.first_name}} {{profile.last_name}}</td>
+                        <td>{{profile.department}}</td>
+                        <td>{{subject.subject}}</td>
+                        <td>{{profile.year_of_study}}</td>
+                        <td>{{profile.updated}}</td>
+                    </tr>
+                    {% endfor%}
+                </tbody>
+            </table>
+            <a href="{% url 'reset' %}"><button type="button" class="btn btn-outline-secondary">Reset</button></a>
+            <a href="{% url 'dashboard' %}"><button type="button" class="btn btn-outline-primary">Refresh</button></a>
+            <a href="{% url 'clear_history' %}"><button type="button" class="btn btn-outline-secondary">Clear History</button></a>
+            <button type="button" class="btn btn-outline-success" id="download-btn">Download Excel</button>
+
+        </div>
+    </div>
+
+</div>
+<script>
+    $(".scan").click(function () {
+        var postData = { csrfmiddlewaretoken: '{{ csrf_token }}' }
+        $.ajax({
+            url: "{% url 'scan' %}",
+            data: {
+
+            },
+        });
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#download-btn").click(function() {
+            // Function to convert table data to Excel sheet
+            function tableToExcel() {
+                const ws = XLSX.utils.table_to_sheet(document.querySelector('table'));
+                const wb = XLSX.utils.book_new();
+
+                // Get today's date for filename
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = today.getMonth() + 1;
+                const day = today.getDate();
+                const formattedDate = `${year}_${month < 10 ? '0' : ''}${month}_${day < 10 ? '0' : ''}${day}`;
+
+                // Generate filename
+                const filename = `student_attendance_${formattedDate}.xlsx`;
+
+                XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+                XLSX.writeFile(wb, filename);
+            }
+
+            // Trigger the download
+            tableToExcel();
+        });
+    });
+</script>
+
+{% endblock content %}
